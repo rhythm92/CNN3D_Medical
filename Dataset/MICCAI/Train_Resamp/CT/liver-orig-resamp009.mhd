@@ -1,0 +1,13 @@
+ObjectType = Image
+NDims = 3
+BinaryData = True
+BinaryDataByteOrderMSB = False
+CompressedData = False
+TransformMatrix = 0.746094 0 0 0 0.746094 0 0 0 1
+Offset = 20.596 75.149 17
+CenterOfRotation = 0 0 0
+AnatomicalOrientation = RAI
+ElementSpacing = 7.78 6.394 6.429
+DimSize = 28 28 28
+ElementType = MET_SHORT
+ElementDataFile = liver-orig-resamp009.raw
