@@ -39,23 +39,25 @@ def shared_dataset(trainCTPath, trainMaskPath, testCTPath, testMaskPath, filterS
 	dtrain_y = np.zeros([noTrain, Width, Height, Depth], 'float32')
 
 	for i in range(1, noTrain+1):
-		imgFilename = trainCTPath + "liver-orig-resamp" + str(i).zfill(3) + ".mhd"
-		mskFilename = trainMaskPath + "liver-seg-resamp" + str(i).zfill(3) + ".mhd"
+         imgFilename = trainCTPath + "liver-orig-resamp" + str(i).zfill(3) + ".mhd"
+         mskFilename = trainMaskPath + "liver-seg-resamp" + str(i).zfill(3) + ".mhd"
 
-		print "processing " + imgFilename + " ..."
-		print (" ")
+         print "processing " + imgFilename + " ..."
+         print (" ")
 
-		imgInput = sitk.ReadImage(imgFilename)
-		mskInput = sitk.ReadImage(mskFilename)
+         imgInput = sitk.ReadImage(imgFilename)
+         mskInput = sitk.ReadImage(mskFilename)
 		
 		#Extraction of image ROI
-		aa = sitk.GetArrayFromImage(imgInput)
+         aa = sitk.GetArrayFromImage(imgInput)
+         aa = normalize(aa).astype('float32')
 	#    Input size is increased to compensate for convlution size reduction
-		dtrain_x[i-1, :, :, :] = np.array(np.pad(aa, ((padSize[0,0],), (padSize[0,1],), (padSize[0,2],)), 'symmetric'), dtype=np.float32)
+         dtrain_x[i-1, :, :, :] = np.array(np.pad(aa, ((padSize[0,0],), (padSize[0,1],), (padSize[0,2],)), 'symmetric'), dtype=np.float32)
 	#   dtrain_x[i-1, :, :, :] = sitk.GetArrayFromImage(imgInput)
-		dtrain_y[i-1, :, :, :] = sitk.GetArrayFromImage(mskInput)
-		dtrain_y[i-1, :, :, :] = np.array(dtrain_y[i-1, :, :, :], dtype=np.float32)
-		dtrain_y[i-1, :, :, :] = np.logical_and(dtrain_y[i-1, :, :, :], dtrain_y[i-1, :, :, :])
+         dtrain_y[i-1, :, :, :] = sitk.GetArrayFromImage(mskInput)
+         dtrain_y[i-1, :, :, :] = np.array(dtrain_y[i-1, :, :, :], dtype=np.float32)
+         dtrain_y[i-1, :, :, :] = np.logical_and(dtrain_y[i-1, :, :, :], dtrain_y[i-1, :, :, :])
+         
 
 	shared_x = theano.shared(np.asarray(dtrain_x,dtype=theano.config.floatX),borrow=borrow)  
 	shared_y = theano.shared(np.asarray(dtrain_y,dtype=theano.config.floatX),borrow=borrow) 
@@ -68,4 +70,20 @@ def shared_dataset(trainCTPath, trainMaskPath, testCTPath, testMaskPath, filterS
 	# ``shared_y`` we will have to cast it to int. This little hack
 	# lets ous get around this issue
 	return shared_x, T.cast(shared_y, 'float32'), dtrain_y
+ 
+def normalize(arr):
+    """
+    Linear normalization
+    http://en.wikipedia.org/wiki/Normalization_%28image_processing%29
+    """
+    arr = arr.astype('float32')
+    # Do not touch the alpha channel
+    for i in range(3):
+        minval = arr[i,...].min()
+        maxval = arr[i,...].max()
+        if minval != maxval:
+            arr[i,...] -= minval
+            arr[i,...] *= (1024.0/(maxval-minval))
+    return arr
+
 	
